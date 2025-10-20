@@ -11,8 +11,6 @@ button.sm{padding:6px 10px}
 .validity{grid-column:1 / -1;display:grid;grid-template-columns:1fr;gap:8px}
 .quick-terms{display:flex;flex-wrap:wrap;gap:6px}
 .chip{font-size:10px;padding:6px 10px;border-radius:999px;background:#0f1622;border:1px solid #263244}
-.codes{display:flex;flex-wrap:wrap;align-items:center;gap:10px;grid-column:1 / -1}
-.codes input#codePayload{flex:1;min-width:200px}
 .actions{display:flex;flex-wrap:wrap;gap:10px;grid-column:1 / -1}
 .presets,.history{margin-top:16px;background:#121827;padding:12px;border:1px solid #1f2937;border-radius:10px}
 .preset-list{display:flex;flex-wrap:wrap;gap:8px}

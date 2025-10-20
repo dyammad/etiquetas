@@ -3,15 +3,10 @@
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
   const productSelect = $('#productSelect');
-  const newProductInput = $('#newProductInput');
-  const addProductBtn = $('#addProductBtn');
   const mfgDateInput = $('#mfgDate');
   const expDateInput = $('#expDate');
   const useAutoValidity = $('#useAutoValidity');
-  const weightInput = $('#weight');
-  const lotInput = $('#lot');
   const notesInput = $('#notes');
-  const codePayloadInput = $('#codePayload');
   const printBtn = $('#printBtn');
   const savePresetBtn = $('#savePresetBtn');
   const exportHistoryBtn = $('#exportHistoryBtn');
@@ -224,31 +219,7 @@
     renderQueueGrid(queue);
   }
 
-  function buildPayload(){
-    const tpl = codePayloadInput.value || '{PRODUTO}|{LOTE}|{FAB}|{VAL}';
-    const values = {
-      PRODUTO: productSelect.value || '',
-      LOTE: lotInput.value || '',
-      PESO: weightInput.value || '',
-      OBS: notesInput.value || ''
-    };
-    const mfg = mfgDateInput.value ? parseISO(mfgDateInput.value) : null;
-    const exp = expDateInput.value ? parseISO(expDateInput.value) : null;
-    values.FAB = mfg ? fmtDateISO(mfg) : '';
-    values.VAL = exp ? fmtDateISO(exp) : '';
-    return tpl.replace(/\{(PRODUTO|FAB|VAL|PESO|LOTE|OBS)\}/g, (_, k) => values[k] ?? '');
-  }
 
-  function addProduct(name){
-    if(!name) return;
-    if(products.some(p=>p.name.toLowerCase() === name.toLowerCase())) return;
-    products.push({ name, shelf: null });
-    save(STORAGE_KEYS.products, products);
-    renderProducts();
-    productSelect.value = name;
-    applyAutoValidity();
-    updatePreview();
-  }
 
   function savePreset(){
     const id = 'p_'+Date.now();
@@ -320,8 +291,6 @@
       mfgDateInput.value = fmtDateISO(today);
       useAutoValidity.checked = true;
       applyAutoValidity();
-      weightInput.value = p.weight || '';
-      lotInput.value = p.lot || '';
       notesInput.value = p.notes || '';
       if(qtyInput) qtyInput.value = p.qty || '1';
       updatePreview();
@@ -351,7 +320,7 @@
   }
 
   function exportHistory(){
-    const headers = ['timestamp','produto','fabricacao','validade','peso','lote','obs','payload'];
+    const headers = ['timestamp','produto','fabricacao','validade','obs'];
     const lines = [headers.join(',')];
     history.forEach(h => {
       const row = [
@@ -359,10 +328,7 @@
         JSON.stringify(h.product),
         JSON.stringify(h.mfgIso),
         JSON.stringify(h.expIso),
-        JSON.stringify(h.weight||''),
-        JSON.stringify(h.lot||''),
-        JSON.stringify(h.notes||''),
-        JSON.stringify(h.payload||'')
+        JSON.stringify(h.notes||'')
       ].join(',');
       lines.push(row);
     });
@@ -383,7 +349,6 @@
     // history per label
     const mfg = snap.mfgISO ? parseISO(snap.mfgISO) : null;
     const exp = snap.expISO ? parseISO(snap.expISO) : null;
-    const payload = buildPayload();
     for(let i=0;i<qty;i++){
       addHistory({
         ts: Date.now(),
@@ -393,10 +358,7 @@
         expIso: snap.expISO,
         mfgHuman: mfg ? fmtDateHuman(mfg) : '',
         expHuman: exp ? fmtDateHuman(exp) : '',
-        weight: weightInput.value,
-        lot: lotInput.value,
-        notes: notesInput.value,
-        payload
+        notes: notesInput.value
       });
     }
     // Wait for DOM to render then print
@@ -417,7 +379,7 @@
       product: q.product,
       mfgIso: q.mfgISO, expIso: q.expISO,
       mfgHuman: q.mfgISO || '', expHuman: q.expISO || '',
-      weight: '', lot: '', notes: '', payload: ''
+      notes: ''
     }));
     // Wait for DOM to render then print
     setTimeout(() => {
@@ -427,16 +389,11 @@
   }
 
   function bind(){
-    addProductBtn.addEventListener('click', ()=> addProduct(newProductInput.value.trim()));
     productSelect.addEventListener('change', ()=>{ applyAutoValidity(); updatePreview(); });
     mfgDateInput.addEventListener('change', ()=>{ if(useAutoValidity.checked) applyAutoValidity(); updatePreview(); });
     expDateInput.addEventListener('change', ()=> updatePreview());
     useAutoValidity.addEventListener('change', ()=>{ applyAutoValidity(); updatePreview(); });
-    weightInput.addEventListener('input', updatePreview);
-    lotInput.addEventListener('input', updatePreview);
     notesInput.addEventListener('input', updatePreview);
-    codePayloadInput.addEventListener('input', updatePreview);
-    $$('input[name="codeType"]').forEach(r=> r.addEventListener('change', updatePreview));
     $$('.chip').forEach(c => c.addEventListener('click', ()=>{ const d=termToDate(c.dataset.term); expDateInput.value = fmtDateISO(d); updatePreview(); }));
     printBtn.addEventListener('click', handlePrint);
     printQueueBtn.addEventListener('click', handlePrintQueue);
@@ -449,6 +406,10 @@
   function init(){
     renderProducts();
     ensureToday();
+    // Set default validity to 5 days
+    const today = mfgDateInput.value ? parseISO(mfgDateInput.value) : new Date();
+    const defaultExpiry = addDays(today, 5);
+    expDateInput.value = fmtDateISO(defaultExpiry);
     applyAutoValidity();
     renderPresets();
     renderHistory();

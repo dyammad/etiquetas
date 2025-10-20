@@ -14,14 +14,9 @@
     <section class="controls">
       <h1>Etiquetas Inteligentes 60x40</h1>
       <div class="grid">
-        <label>
+        <label class="full">
           <span>Produto</span>
           <select id="productSelect"></select>
-        </label>
-        <label>
-          <span>Novo produto</span>
-          <input id="newProductInput" placeholder="Adicionar manualmente" />
-          <button id="addProductBtn" class="sm">Adicionar</button>
         </label>
         <label>
           <span>Fabricação</span>
@@ -43,24 +38,10 @@
             <input type="checkbox" id="useAutoValidity" checked /> Usar validade padrão do produto (se houver)
           </label>
         </div>
-        <label>
-          <span>Peso (opcional)</span>
-          <input id="weight" placeholder="ex.: 1,3 kg" />
-        </label>
-        <label>
-          <span>Lote (opcional)</span>
-          <input id="lot" placeholder="ex.: 2025-10-19-A" />
-        </label>
         <label class="full">
           <span>Observações (opcional)</span>
           <input id="notes" placeholder="ex.: Sem lactose / Turno B" />
         </label>
-        <div class="codes">
-          <label><input type="radio" name="codeType" value="none" checked /> Sem código</label>
-          <label><input type="radio" name="codeType" value="barcode" /> Código de barras (Code128)</label>
-          <label><input type="radio" name="codeType" value="qr" /> QR Code</label>
-          <input id="codePayload" placeholder="Conteúdo do código (template)" />
-        </div>
         <label class="full">
           <span>Tamanho do papel</span>
           <select id="paperSize">
