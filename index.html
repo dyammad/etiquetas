@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Impressão de Etiquetas (60x40 mm)</title>
+  <link rel="stylesheet" href="etiquetas.css" />
+  <!-- Libs for codes -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+</head>
+<body>
+  <main class="app">
+    <section class="controls">
+      <h1>Etiquetas Inteligentes 60x40</h1>
+      <div class="grid">
+        <label>
+          <span>Produto</span>
+          <select id="productSelect"></select>
+        </label>
+        <label>
+          <span>Novo produto</span>
+          <input id="newProductInput" placeholder="Adicionar manualmente" />
+          <button id="addProductBtn" class="sm">Adicionar</button>
+        </label>
+        <label>
+          <span>Fabricação</span>
+          <input id="mfgDate" type="date" />
+        </label>
+        <div class="validity">
+          <label>
+            <span>Validade</span>
+            <input id="expDate" type="date" />
+          </label>
+          <div class="quick-terms">
+            <button class="chip" data-term="5d">5 dias</button>
+            <button class="chip" data-term="7d">7 dias</button>
+            <button class="chip" data-term="15d">15 dias</button>
+            <button class="chip" data-term="30d">30 dias</button>
+            <button class="chip" data-term="3m">3 meses</button>
+          </div>
+          <label class="auto-valid">
+            <input type="checkbox" id="useAutoValidity" checked /> Usar validade padrão do produto (se houver)
+          </label>
+        </div>
+        <label>
+          <span>Peso (opcional)</span>
+          <input id="weight" placeholder="ex.: 1,3 kg" />
+        </label>
+        <label>
+          <span>Lote (opcional)</span>
+          <input id="lot" placeholder="ex.: 2025-10-19-A" />
+        </label>
+        <label class="full">
+          <span>Observações (opcional)</span>
+          <input id="notes" placeholder="ex.: Sem lactose / Turno B" />
+        </label>
+        <div class="codes">
+          <label><input type="radio" name="codeType" value="none" checked /> Sem código</label>
+          <label><input type="radio" name="codeType" value="barcode" /> Código de barras (Code128)</label>
+          <label><input type="radio" name="codeType" value="qr" /> QR Code</label>
+          <input id="codePayload" placeholder="Conteúdo do código (template)" />
+        </div>
+        <label class="full">
+          <span>Tamanho do papel</span>
+          <select id="paperSize">
+            <option value="60mm">60mm (padrão)</option>
+            <option value="55mm">55mm (5.5cm)</option>
+          </select>
+        </label>
+        <div class="full batch">
+          <label>
+            <span>Quantidade</span>
+            <input id="qty" type="number" min="1" value="1" />
+          </label>
+          <div class="actions">
+            <button id="addToQueueBtn">Adicionar à fila</button>
+            <button id="clearQueueBtn">Limpar fila</button>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="printBtn" class="primary">Imprimir</button>
+          <button id="printQueueBtn" class="primary">Imprimir fila</button>
+          <button id="savePresetBtn">Salvar como atalho</button>
+          <button id="exportHistoryBtn">Exportar histórico</button>
+        </div>
+      </div>
+
+      <div class="presets">
+        <h2>Atalhos de impressão</h2>
+        <div id="presetsList" class="preset-list"></div>
+      </div>
+
+      <div class="history">
+        <h2>Histórico</h2>
+        <div id="historyList" class="history-list"></div>
+      </div>
+    </section>
+
+    <section class="preview-panel">
+      <h2>Prévia 1:1 (60x40 mm)</h2>
+      <div class="preview">
+        <div id="label" class="label">
+          <div class="label-box">
+            <div class="line-row">
+              <div class="line-title">Produto:</div>
+              <div class="line-fill"><span id="lineProduct">—</span></div>
+            </div>
+            <div class="line-row">
+              <div class="line-title">Fabricação:</div>
+              <div class="date-fill">
+                <div class="date-seg" id="mfgDD">&nbsp;</div>
+                <div class="slash">/</div>
+                <div class="date-seg" id="mfgMM">&nbsp;</div>
+                <div class="slash">/</div>
+                <div class="date-seg" id="mfgYY">&nbsp;</div>
+              </div>
+            </div>
+            <div class="line-row">
+              <div class="line-title">Validade:</div>
+              <div class="date-fill">
+                <div class="date-seg" id="expDD">&nbsp;</div>
+                <div class="slash">/</div>
+                <div class="date-seg" id="expMM">&nbsp;</div>
+                <div class="slash">/</div>
+                <div class="date-seg" id="expYY">&nbsp;</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sheet" id="sheet">
+          <div class="labels-grid" id="labelsGrid"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="etiquetas.js"></script>
+</body>
+</html>
