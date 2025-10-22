@@ -20,7 +20,7 @@ button.sm{padding:6px 10px}
 .history-item{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px 10px;background:#0f1622;border:1px solid #263244;border-radius:8px;font-size:10px}
 .preview-panel{display:none}
 .preview-panel h2{margin:0 0 10px;font-size:14px}
-.preview{background:#0f1622;border:1px dashed #2a3b52;border-radius:12px;padding:14px;width:100%;max-width:max-content;overflow-x:auto;display:flex;flex-direction:column;gap:12px;align-items:center}
+.preview{background:#0f1622;border:1px dashed #2a3b52;border-radius:12px;padding:14px;width:100%;max-width:max-content;overflow-x:auto}
 .label{width:226.77px;height:151.18px;background:white;color:black;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .label.size-55mm{width:207.87px}
 .label-box{width:100%;height:100%;border:2px solid #000;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:8px}
@@ -39,21 +39,14 @@ button.sm{padding:6px 10px}
 
 /* Responsive breakpoints */
 @media (max-width:480px){
-  .app{padding:8px;gap:12px}
-  .grid{padding:8px;gap:8px}
+  .app{padding:12px;gap:16px}
+  .grid{padding:10px;gap:10px}
   .controls h1{font-size:16px}
-  button{padding:8px 12px;font-size:13px;width:100%}
-  .actions{gap:8px;flex-direction:column}
-  .actions button{width:100%}
-  .line-title{font-size:11px}
-  .line-fill{font-size:11px}
-  .history-list{max-height:180px}
-  .preset-list{flex-direction:column}
-  .preset{width:100%}
-  .quick-terms{justify-content:space-between}
-  .chip{flex:1;text-align:center;min-width:0}
-  .label{transform:scale(0.65)}
-  .sheet{transform:scale(0.6)}
+  button{padding:6px 10px;font-size:12px}
+  .actions{gap:8px}
+  .line-title{font-size:12px}
+  .line-fill{font-size:12px}
+  .history-list{max-height:200px}
 }
 
 @media (min-width:640px){
