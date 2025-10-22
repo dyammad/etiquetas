@@ -161,6 +161,7 @@
     const notesHtml = item.notes ? `<div class="line-row"><div class="line-title">Obs:</div><div class="line-fill"><span style="font-size:10px">${item.notes}</span></div></div>` : '';
     el.innerHTML = `
       <div class="label-box">
+        <div class="label-brand">HARO</div>
         <div class="line-row">
           <div class="line-title">Produto:</div>
           <div class="line-fill"><span>${item.product || '—'}</span></div>
@@ -401,6 +402,25 @@
     clearQueueBtn.addEventListener('click', clearQueue);
     savePresetBtn.addEventListener('click', savePreset);
     exportHistoryBtn.addEventListener('click', exportHistory);
+    
+    // Hamburger menu toggle
+    const hamburgerBtn = $('#hamburgerBtn');
+    const controlsPanel = $('#controlsPanel');
+    if(hamburgerBtn && controlsPanel){
+      hamburgerBtn.addEventListener('click', ()=>{
+        hamburgerBtn.classList.toggle('active');
+        controlsPanel.classList.toggle('open');
+      });
+      // Close menu when clicking outside on mobile
+      document.addEventListener('click', (e)=>{
+        if(window.innerWidth < 768 && controlsPanel.classList.contains('open')){
+          if(!controlsPanel.contains(e.target) && !hamburgerBtn.contains(e.target)){
+            hamburgerBtn.classList.remove('active');
+            controlsPanel.classList.remove('open');
+          }
+        }
+      });
+    }
   }
 
   function init(){

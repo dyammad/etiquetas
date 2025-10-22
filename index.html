@@ -3,15 +3,36 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Sistema de impressão de etiquetas 60x40mm para produtos alimentícios" />
+  <meta name="theme-color" content="#121827" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Etiquetas" />
   <title>Impressão de Etiquetas (60x40 mm)</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  
   <link rel="stylesheet" href="etiquetas.css" />
   <!-- Libs for codes -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 </head>
 <body>
+  <!-- Mobile header with hamburger menu -->
+  <header class="mobile-header">
+    <h1>Etiquetas Inteligentes</h1>
+    <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </header>
+
   <main class="app">
-    <section class="controls">
+    <section class="controls" id="controlsPanel">
       <h1>Etiquetas Inteligentes 60x40</h1>
       <div class="grid">
         <label class="full">
@@ -117,5 +138,54 @@
   </main>
 
   <script src="etiquetas.js"></script>
+  
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(registration => {
+            console.log('Service Worker registrado com sucesso:', registration.scope);
+          })
+          .catch(error => {
+            console.log('Falha ao registrar Service Worker:', error);
+          });
+      });
+    }
+
+    // Prompt para instalar PWA
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      // Criar botão de instalação se não existir
+      if (!document.getElementById('installBtn')) {
+        const installBtn = document.createElement('button');
+        installBtn.id = 'installBtn';
+        installBtn.textContent = '📱 Instalar App';
+        installBtn.className = 'primary';
+        installBtn.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:1000;box-shadow:0 4px 12px rgba(37,99,235,0.4)';
+        
+        installBtn.addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`Usuário ${outcome === 'accepted' ? 'aceitou' : 'recusou'} a instalação`);
+            deferredPrompt = null;
+            installBtn.remove();
+          }
+        });
+        
+        document.body.appendChild(installBtn);
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      console.log('PWA instalado com sucesso!');
+      const installBtn = document.getElementById('installBtn');
+      if (installBtn) installBtn.remove();
+    });
+  </script>
 </body>
 </html>

@@ -39,17 +39,39 @@ Sistema web completo para impressão de etiquetas de produtos alimentícios com 
 
 - **Design Responsivo**
   - Mobile-first (< 480px)
+  - Menu hambúrguer para mobile
+  - Cards empilhados verticalmente
   - Tablet (640px - 1024px)
   - Desktop (1024px+)
   - Preview visível apenas em desktop
+
+- **Progressive Web App (PWA)**
+  - Instalável no celular/desktop
+  - Funciona offline
+  - Ícone na tela inicial
+  - Experiência nativa
+  - Cache inteligente
 
 ## 🚀 Como Usar
 
 ### Instalação
 
+#### Uso Web
 1. Clone ou baixe o projeto
 2. Abra `equiqueras/index.html` no navegador
 3. Pronto! Não precisa de servidor ou instalação
+
+#### Instalação como PWA (Recomendado)
+1. Acesse o site pelo navegador (Chrome/Edge/Safari)
+2. Clique no botão "📱 Instalar App" que aparece no canto inferior direito
+3. Ou use o menu do navegador: "Instalar aplicativo" / "Adicionar à tela inicial"
+4. O app será instalado e funcionará offline
+
+**Vantagens do PWA:**
+- ✅ Acesso rápido pela tela inicial
+- ✅ Funciona sem internet
+- ✅ Experiência de app nativo
+- ✅ Não ocupa espaço na loja de apps
 
 ### Uso Básico
 
@@ -118,11 +140,20 @@ Sistema web completo para impressão de etiquetas de produtos alimentícios com 
 
 ## 📱 Responsividade
 
-### Mobile (< 480px)
+### Mobile (< 768px)
+- **Menu hambúrguer** - Controles em painel deslizante
 - Layout de coluna única
-- Botões e textos otimizados
+- Botões full-width empilhados verticalmente
+- Cards de atalhos e histórico otimizados
 - Preview oculto (economia de espaço)
-- Scroll horizontal se necessário
+- Etiquetas redimensionadas automaticamente
+- Touch-friendly com scroll suave
+
+### Mobile Pequeno (< 480px)
+- Escala adicional para etiquetas (65%)
+- Chips de validade distribuídos uniformemente
+- Histórico compacto (180px altura)
+- Padding reduzido para maximizar espaço
 
 ### Tablet (640px - 1024px)
 - Grid de 2 colunas nos formulários
@@ -141,7 +172,13 @@ equiqueras/
 ├── index.html          # Página principal
 ├── etiquetas.css       # Estilos e responsividade
 ├── etiquetas.js        # Lógica da aplicação
-└── README.md           # Este arquivo
+├── manifest.json       # Configuração PWA
+├── sw.js              # Service Worker (cache offline)
+├── icon.svg           # Ícone vetorial
+├── icon-192.png       # Ícone 192x192 (gerar)
+├── icon-512.png       # Ícone 512x512 (gerar)
+├── generate-icons.html # Gerador de ícones PNG
+└── README.md          # Este arquivo
 ```
 
 ## 💾 Armazenamento de Dados
@@ -162,8 +199,21 @@ Todos os dados são salvos localmente no navegador usando **localStorage**:
 - **JavaScript (Vanilla)** - Lógica da aplicação
 - **LocalStorage API** - Persistência de dados
 - **Print API** - Impressão nativa do navegador
+- **Service Worker API** - Cache offline e PWA
+- **Web App Manifest** - Instalação como app
 - **JsBarcode** - Geração de códigos de barras
 - **QRCode.js** - Geração de QR Codes
+
+## 🎨 Gerando Ícones PWA
+
+Para gerar os ícones PNG necessários para o PWA:
+
+1. Abra `generate-icons.html` no navegador
+2. Clique em "🚀 Gerar Ícones"
+3. Baixe `icon-192.png` e `icon-512.png`
+4. Salve os arquivos na pasta raiz do projeto
+
+Os ícones são gerados automaticamente a partir do SVG incluído.
 
 ## 📊 Funcionalidades Avançadas
 
@@ -290,6 +340,7 @@ Para dúvidas ou problemas:
 
 ---
 
-**Versão**: 1.0.0  
+**Versão**: 2.0.0  
 **Última atualização**: Outubro 2025  
-**Compatibilidade**: Chrome 90+, Firefox 88+, Edge 90+, Safari 14+
+**Compatibilidade**: Chrome 90+, Firefox 88+, Edge 90+, Safari 14+  
+**PWA**: ✅ Instalável | ✅ Offline | ✅ Mobile-first
