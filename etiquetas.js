@@ -402,25 +402,6 @@
     clearQueueBtn.addEventListener('click', clearQueue);
     savePresetBtn.addEventListener('click', savePreset);
     exportHistoryBtn.addEventListener('click', exportHistory);
-    
-    // Hamburger menu toggle
-    const hamburgerBtn = $('#hamburgerBtn');
-    const controlsPanel = $('#controlsPanel');
-    if(hamburgerBtn && controlsPanel){
-      hamburgerBtn.addEventListener('click', ()=>{
-        hamburgerBtn.classList.toggle('active');
-        controlsPanel.classList.toggle('open');
-      });
-      // Close menu when clicking outside on mobile
-      document.addEventListener('click', (e)=>{
-        if(window.innerWidth < 768 && controlsPanel.classList.contains('open')){
-          if(!controlsPanel.contains(e.target) && !hamburgerBtn.contains(e.target)){
-            hamburgerBtn.classList.remove('active');
-            controlsPanel.classList.remove('open');
-          }
-        }
-      });
-    }
   }
 
   function init(){
