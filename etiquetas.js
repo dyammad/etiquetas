@@ -19,6 +19,13 @@
   const labelsGrid = $('#labelsGrid');
   const sheet = $('#sheet');
   const paperSizeSelect = $('#paperSize');
+  const printerTypeSelect = $('#printerType');
+  const connectBtBtn = $('#connectBtBtn');
+  const btStatus = $('#btStatus');
+
+  // Bluetooth printer state
+  let bluetoothDevice = null;
+  let bluetoothCharacteristic = null;
 
   const lineProduct = $('#lineProduct');
   const mfgDD = $('#mfgDD');
@@ -49,7 +56,7 @@
     { name: 'Couve Crispy', shelf: { unit: 'days', value: 15 } }
   ];
 
-  const settings = load(STORAGE_KEYS.settings, { brand: 'Empresa', dateFormat: 'pt-BR', labelSize: { wMm: 60, hMm: 40 } });
+  const settings = load(STORAGE_KEYS.settings, { brand: 'Empresa', dateFormat: 'pt-BR', labelSize: { wMm: 60, hMm: 40 }, printerType: 'browser' });
   const products = load(STORAGE_KEYS.products, defaultProducts);
   const presets = load(STORAGE_KEYS.presets, []);
   const history = load(STORAGE_KEYS.history, []);
@@ -157,7 +164,10 @@
   function createLabelElement(item){
     const el = document.createElement('div');
     const paperSize = paperSizeSelect?.value || '60mm';
-    el.className = paperSize === '55mm' ? 'label size-55mm' : 'label';
+    let className = 'label';
+    if(paperSize === '58mm') className = 'label size-58mm';
+    else if(paperSize === '55mm') className = 'label size-55mm';
+    el.className = className;
     const notesHtml = item.notes ? `<div class="line-row"><div class="line-title">Obs:</div><div class="line-fill"><span style="font-size:10px">${item.notes}</span></div></div>` : '';
     el.innerHTML = `
       <div class="label-box">
@@ -199,7 +209,10 @@
     console.log('Rendering', items.length, 'labels to grid');
     labelsGrid.innerHTML = '';
     const paperSize = paperSizeSelect?.value || '60mm';
-    labelsGrid.className = paperSize === '55mm' ? 'labels-grid size-55mm' : 'labels-grid';
+    let gridClassName = 'labels-grid';
+    if(paperSize === '58mm') gridClassName = 'labels-grid size-58mm';
+    else if(paperSize === '55mm') gridClassName = 'labels-grid size-55mm';
+    labelsGrid.className = gridClassName;
     items.forEach((it, index) => {
       console.log('Creating label', index, ':', it);
       const labelEl = createLabelElement(it);
@@ -320,6 +333,158 @@
     });
   }
 
+  // Bluetooth connection for KP-IM606
+  async function connectBluetooth(){
+    try {
+      if(!navigator.bluetooth){
+        alert('Bluetooth não suportado neste navegador. Use Chrome/Edge.');
+        return;
+      }
+      
+      updateBtStatus('Procurando impressora...');
+      
+      bluetoothDevice = await navigator.bluetooth.requestDevice({
+        filters: [{ namePrefix: 'KP' }],
+        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+      });
+      
+      updateBtStatus('Conectando...');
+      const server = await bluetoothDevice.gatt.connect();
+      
+      const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+      bluetoothCharacteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+      
+      updateBtStatus('✅ Conectado: ' + bluetoothDevice.name);
+      console.log('Bluetooth connected:', bluetoothDevice.name);
+      
+      bluetoothDevice.addEventListener('gattserverdisconnected', ()=>{
+        updateBtStatus('❌ Desconectado');
+        bluetoothCharacteristic = null;
+      });
+      
+    } catch(err){
+      console.error('Bluetooth error:', err);
+      updateBtStatus('❌ Erro: ' + err.message);
+    }
+  }
+  
+  function updateBtStatus(msg){
+    if(btStatus){
+      btStatus.textContent = msg;
+      btStatus.style.display = 'block';
+    }
+  }
+  
+  // ESC/POS commands for thermal printer
+  function escPos(){
+    return {
+      init: [0x1B, 0x40], // Initialize
+      alignCenter: [0x1B, 0x61, 0x01],
+      alignLeft: [0x1B, 0x61, 0x00],
+      bold: [0x1B, 0x45, 0x01],
+      boldOff: [0x1B, 0x45, 0x00],
+      small: [0x1B, 0x21, 0x01],
+      normal: [0x1B, 0x21, 0x00],
+      cut: [0x1D, 0x56, 0x00],
+      feed: [0x0A],
+      feedLines: (n) => Array(n).fill(0x0A)
+    };
+  }
+  
+  function textToBytes(text){
+    return new TextEncoder().encode(text);
+  }
+  
+  function combineBytes(...arrays){
+    const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for(const arr of arrays){
+      result.set(arr, offset);
+      offset += arr.length;
+    }
+    return result;
+  }
+  
+  async function printViaBluetooth(items){
+    if(!bluetoothCharacteristic){
+      alert('Conecte a impressora Bluetooth primeiro!');
+      return;
+    }
+    
+    try {
+      updateBtStatus('Imprimindo...');
+      const cmd = escPos();
+      
+      for(const item of items){
+        // Initialize
+        await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.init));
+        
+        // Header - HARO
+        await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.alignCenter));
+        await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.bold));
+        await bluetoothCharacteristic.writeValue(textToBytes('HARO'));
+        await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.feed));
+        await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.boldOff));
+        await bluetoothCharacteristic.writeValue(textToBytes('--------------------------------'));
+        await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.feed));
+        
+        // Content
+        await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.alignLeft));
+        await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.normal));
+        
+        // Product
+        await bluetoothCharacteristic.writeValue(textToBytes('Produto: ' + (item.product || '-')));
+        await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.feed));
+        
+        // Manufacturing date
+        const mfgDate = item.mfgISO ? item.mfgISO.split('-').reverse().join('/') : '--/--/--';
+        await bluetoothCharacteristic.writeValue(textToBytes('Fabricacao: ' + mfgDate));
+        await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.feed));
+        
+        // Expiry date
+        const expDate = item.expISO ? item.expISO.split('-').reverse().join('/') : '--/--/--';
+        await bluetoothCharacteristic.writeValue(textToBytes('Validade: ' + expDate));
+        await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.feed));
+        
+        // Notes
+        if(item.notes){
+          await bluetoothCharacteristic.writeValue(textToBytes('Obs: ' + item.notes));
+          await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.feed));
+        }
+        
+        // Footer
+        await bluetoothCharacteristic.writeValue(textToBytes('--------------------------------'));
+        await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.feed));
+        await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.feedLines(3)));
+        
+        // Add to history
+        const mfg = item.mfgISO ? parseISO(item.mfgISO) : null;
+        const exp = item.expISO ? parseISO(item.expISO) : null;
+        addHistory({
+          ts: Date.now(),
+          tsHuman: new Date().toLocaleString(settings.dateFormat||'pt-BR'),
+          product: item.product,
+          mfgIso: item.mfgISO,
+          expIso: item.expISO,
+          mfgHuman: mfg ? fmtDateHuman(mfg) : '',
+          expHuman: exp ? fmtDateHuman(exp) : '',
+          notes: item.notes || ''
+        });
+      }
+      
+      // Cut paper
+      await bluetoothCharacteristic.writeValue(new Uint8Array(cmd.cut));
+      
+      updateBtStatus('✅ Impresso com sucesso!');
+      setTimeout(() => updateBtStatus('✅ Conectado: ' + bluetoothDevice.name), 3000);
+      
+    } catch(err){
+      console.error('Print error:', err);
+      updateBtStatus('❌ Erro ao imprimir: ' + err.message);
+    }
+  }
+  
   function exportHistory(){
     const headers = ['timestamp','produto','fabricacao','validade','obs'];
     const lines = [headers.join(',')];
@@ -340,53 +505,71 @@
     URL.revokeObjectURL(url);
   }
 
-  function handlePrint(){
+  async function handlePrint(){
     updatePreview();
     const qty = Math.max(1, parseInt(qtyInput?.value || '1', 10));
     const snap = snapshotCurrent();
     const items = Array.from({length: qty}, ()=> ({...snap}));
     console.log('Printing items:', items);
-    renderQueueGrid(items);
-    // history per label
-    const mfg = snap.mfgISO ? parseISO(snap.mfgISO) : null;
-    const exp = snap.expISO ? parseISO(snap.expISO) : null;
-    for(let i=0;i<qty;i++){
-      addHistory({
-        ts: Date.now(),
-        tsHuman: new Date().toLocaleString(settings.dateFormat||'pt-BR'),
-        product: snap.product,
-        mfgIso: snap.mfgISO,
-        expIso: snap.expISO,
-        mfgHuman: mfg ? fmtDateHuman(mfg) : '',
-        expHuman: exp ? fmtDateHuman(exp) : '',
-        notes: notesInput.value
-      });
+    
+    const printerType = printerTypeSelect?.value || 'browser';
+    
+    if(printerType === 'kp-im606'){
+      // Print via Bluetooth
+      await printViaBluetooth(items);
+    } else {
+      // Print via browser
+      renderQueueGrid(items);
+      // history per label
+      const mfg = snap.mfgISO ? parseISO(snap.mfgISO) : null;
+      const exp = snap.expISO ? parseISO(snap.expISO) : null;
+      for(let i=0;i<qty;i++){
+        addHistory({
+          ts: Date.now(),
+          tsHuman: new Date().toLocaleString(settings.dateFormat||'pt-BR'),
+          product: snap.product,
+          mfgIso: snap.mfgISO,
+          expIso: snap.expISO,
+          mfgHuman: mfg ? fmtDateHuman(mfg) : '',
+          expHuman: exp ? fmtDateHuman(exp) : '',
+          notes: notesInput.value
+        });
+      }
+      // Wait for DOM to render then print
+      setTimeout(() => {
+        console.log('Printing now...');
+        window.print();
+      }, 200);
     }
-    // Wait for DOM to render then print
-    setTimeout(() => {
-      console.log('Printing now...');
-      window.print();
-    }, 200);
   }
 
-  function handlePrintQueue(){
+  async function handlePrintQueue(){
     if(queue.length===0){ addCurrentToQueue(); }
     console.log('Printing queue:', queue);
-    renderQueueGrid(queue);
-    // minimal history aggregate
-    const nowHuman = new Date().toLocaleString(settings.dateFormat||'pt-BR');
-    queue.forEach(q => addHistory({
-      ts: Date.now(), tsHuman: nowHuman,
-      product: q.product,
-      mfgIso: q.mfgISO, expIso: q.expISO,
-      mfgHuman: q.mfgISO || '', expHuman: q.expISO || '',
-      notes: ''
-    }));
-    // Wait for DOM to render then print
-    setTimeout(() => {
-      console.log('Printing queue now...');
-      window.print();
-    }, 200);
+    
+    const printerType = printerTypeSelect?.value || 'browser';
+    
+    if(printerType === 'kp-im606'){
+      // Print via Bluetooth
+      await printViaBluetooth(queue);
+    } else {
+      // Print via browser
+      renderQueueGrid(queue);
+      // minimal history aggregate
+      const nowHuman = new Date().toLocaleString(settings.dateFormat||'pt-BR');
+      queue.forEach(q => addHistory({
+        ts: Date.now(), tsHuman: nowHuman,
+        product: q.product,
+        mfgIso: q.mfgISO, expIso: q.expISO,
+        mfgHuman: q.mfgISO || '', expHuman: q.expISO || '',
+        notes: ''
+      }));
+      // Wait for DOM to render then print
+      setTimeout(() => {
+        console.log('Printing queue now...');
+        window.print();
+      }, 200);
+    }
   }
 
   function bind(){
@@ -402,6 +585,19 @@
     clearQueueBtn.addEventListener('click', clearQueue);
     savePresetBtn.addEventListener('click', savePreset);
     exportHistoryBtn.addEventListener('click', exportHistory);
+    
+    // Bluetooth controls
+    if(printerTypeSelect){
+      printerTypeSelect.addEventListener('change', ()=>{
+        const isBluetooth = printerTypeSelect.value === 'kp-im606';
+        if(connectBtBtn) connectBtBtn.style.display = isBluetooth ? 'inline-block' : 'none';
+        if(isBluetooth && paperSizeSelect) paperSizeSelect.value = '58mm';
+      });
+    }
+    
+    if(connectBtBtn){
+      connectBtBtn.addEventListener('click', connectBluetooth);
+    }
   }
 
   function init(){

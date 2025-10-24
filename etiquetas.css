@@ -22,6 +22,7 @@ button.sm{padding:6px 10px}
 .preview-panel h2{margin:0 0 10px;font-size:14px}
 .preview{background:#0f1622;border:1px dashed #2a3b52;border-radius:12px;padding:14px;width:100%;max-width:max-content;overflow-x:auto}
 .label{width:226.77px;height:151.18px;background:white;color:black;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.label.size-58mm{width:219.21px}
 .label.size-55mm{width:207.87px}
 .label-box{width:100%;height:100%;border:2px solid #000;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:8px}
 .label-brand{text-align:center;font-size:18px;font-weight:700;letter-spacing:3px;color:#000;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:2px}
@@ -35,6 +36,7 @@ button.sm{padding:6px 10px}
 /* Sheet preview for batch */
 .sheet{margin-top:12px;background:white;min-width:210mm;min-height:297mm;box-shadow:0 4px 16px rgba(0,0,0,.35);position:relative;overflow:visible;padding:2mm}
 .labels-grid{display:grid;grid-auto-rows:40mm;grid-template-columns:repeat(auto-fill, 60mm);gap:2mm;align-content:flex-start}
+.labels-grid.size-58mm{grid-template-columns:repeat(auto-fill, 58mm)}
 .labels-grid.size-55mm{grid-template-columns:repeat(auto-fill, 55mm)}
 
 /* Responsive breakpoints */
@@ -77,8 +79,10 @@ button.sm{padding:6px 10px}
   .preview{border:none;padding:0;width:100%;max-width:none}
   .sheet{box-shadow:none;min-width:auto;min-height:auto;width:100%;height:auto;padding:2mm;display:block}
   .labels-grid{display:grid;grid-auto-rows:40mm;grid-template-columns:repeat(auto-fill, 60mm);gap:2mm}
+  .labels-grid.size-58mm{grid-template-columns:repeat(auto-fill, 58mm)}
   .labels-grid.size-55mm{grid-template-columns:repeat(auto-fill, 55mm)}
   .label{width:60mm;height:40mm;border:2px solid #000;transform:none;background:white;color:black;display:flex;align-items:center;justify-content:center}
+  .label.size-58mm{width:58mm}
   .label.size-55mm{width:55mm}
   @page{margin:0;size:auto}
 }
