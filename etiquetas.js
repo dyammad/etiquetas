@@ -22,6 +22,7 @@
   const printerTypeSelect = $('#printerType');
   const connectBtBtn = $('#connectBtBtn');
   const btStatus = $('#btStatus');
+  const btHelp = $('#btHelp');
 
   // Bluetooth printer state
   let bluetoothDevice = null;
@@ -343,17 +344,84 @@
       
       updateBtStatus('Procurando impressora...');
       
-      bluetoothDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ namePrefix: 'KP' }],
-        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
-      });
+      // Try multiple filter options for better compatibility
+      let filters = [
+        { namePrefix: 'KP' },
+        { namePrefix: 'IM' },
+        { namePrefix: 'BlueTooth' },
+        { name: 'KP-IM606' },
+        { services: ['000018f0-0000-1000-8000-00805f9b34fb'] }
+      ];
+      
+      // Try with filters first
+      try {
+        bluetoothDevice = await navigator.bluetooth.requestDevice({
+          filters: filters,
+          optionalServices: [
+            '000018f0-0000-1000-8000-00805f9b34fb',
+            '0000180a-0000-1000-8000-00805f9b34fb',
+            '49535343-fe7d-4ae5-8fa9-9fafd205e455'
+          ]
+        });
+      } catch(e) {
+        // Fallback: show all devices
+        console.log('Trying acceptAllDevices fallback...');
+        updateBtStatus('Mostrando todos os dispositivos...');
+        bluetoothDevice = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [
+            '000018f0-0000-1000-8000-00805f9b34fb',
+            '0000180a-0000-1000-8000-00805f9b34fb',
+            '49535343-fe7d-4ae5-8fa9-9fafd205e455'
+          ]
+        });
+      }
       
       updateBtStatus('Conectando...');
       const server = await bluetoothDevice.gatt.connect();
       
-      const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-      bluetoothCharacteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+      // Try different service UUIDs
+      let service = null;
+      let characteristic = null;
       
+      const serviceUUIDs = [
+        '000018f0-0000-1000-8000-00805f9b34fb', // Primary
+        '49535343-fe7d-4ae5-8fa9-9fafd205e455', // Alternative
+        '0000180a-0000-1000-8000-00805f9b34fb'  // Device Info
+      ];
+      
+      const characteristicUUIDs = [
+        '00002af1-0000-1000-8000-00805f9b34fb', // Primary
+        '49535343-8841-43f4-a8d4-ecbe34729bb3', // Alternative write
+        '49535343-1e4d-4bd9-ba61-23c647249616'  // Alternative
+      ];
+      
+      for(const svcUUID of serviceUUIDs) {
+        try {
+          service = await server.getPrimaryService(svcUUID);
+          console.log('Found service:', svcUUID);
+          
+          for(const charUUID of characteristicUUIDs) {
+            try {
+              characteristic = await service.getCharacteristic(charUUID);
+              console.log('Found characteristic:', charUUID);
+              break;
+            } catch(e) {
+              console.log('Characteristic not found:', charUUID);
+            }
+          }
+          
+          if(characteristic) break;
+        } catch(e) {
+          console.log('Service not found:', svcUUID);
+        }
+      }
+      
+      if(!characteristic) {
+        throw new Error('Não foi possível encontrar característica de escrita. Impressora incompatível?');
+      }
+      
+      bluetoothCharacteristic = characteristic;
       updateBtStatus('✅ Conectado: ' + bluetoothDevice.name);
       console.log('Bluetooth connected:', bluetoothDevice.name);
       
@@ -591,6 +659,7 @@
       printerTypeSelect.addEventListener('change', ()=>{
         const isBluetooth = printerTypeSelect.value === 'kp-im606';
         if(connectBtBtn) connectBtBtn.style.display = isBluetooth ? 'inline-block' : 'none';
+        if(btHelp) btHelp.style.display = isBluetooth ? 'block' : 'none';
         if(isBluetooth && paperSizeSelect) paperSizeSelect.value = '58mm';
       });
     }
