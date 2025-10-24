@@ -27,6 +27,7 @@
   // Bluetooth printer state
   let bluetoothDevice = null;
   let bluetoothCharacteristic = null;
+  const PRINTER_MAC = 'CA:06:26:71:4B:5D'; // MAC address da impressora KP-IM606
 
   const lineProduct = $('#lineProduct');
   const mfgDD = $('#mfgDD');
@@ -346,6 +347,7 @@
       
       // Try multiple filter options for better compatibility
       let filters = [
+        { address: PRINTER_MAC }, // Try MAC address first
         { namePrefix: 'KP' },
         { namePrefix: 'IM' },
         { namePrefix: 'BlueTooth' },
@@ -422,8 +424,18 @@
       }
       
       bluetoothCharacteristic = characteristic;
-      updateBtStatus('✅ Conectado: ' + bluetoothDevice.name);
-      console.log('Bluetooth connected:', bluetoothDevice.name);
+      
+      // Show device info
+      const deviceInfo = [
+        'Nome: ' + bluetoothDevice.name,
+        bluetoothDevice.id ? 'ID: ' + bluetoothDevice.id : null
+      ].filter(Boolean).join(' | ');
+      
+      updateBtStatus('✅ Conectado: ' + deviceInfo);
+      console.log('✅ Bluetooth conectado!');
+      console.log('  Nome:', bluetoothDevice.name);
+      console.log('  ID:', bluetoothDevice.id);
+      console.log('  GATT:', bluetoothDevice.gatt.connected ? 'Conectado' : 'Desconectado');
       
       bluetoothDevice.addEventListener('gattserverdisconnected', ()=>{
         updateBtStatus('❌ Desconectado');
@@ -431,8 +443,19 @@
       });
       
     } catch(err){
-      console.error('Bluetooth error:', err);
-      updateBtStatus('❌ Erro: ' + err.message);
+      console.error('❌ Erro Bluetooth:', err);
+      let errorMsg = err.message;
+      
+      // Friendly error messages
+      if(err.message.includes('User cancelled')){
+        errorMsg = 'Conexão cancelada pelo usuário';
+      } else if(err.message.includes('not found')){
+        errorMsg = 'Impressora não encontrada. Verifique se está ligada e próxima.';
+      } else if(err.message.includes('GATT')){
+        errorMsg = 'Falha na conexão GATT. Tente desligar e ligar a impressora.';
+      }
+      
+      updateBtStatus('❌ Erro: ' + errorMsg);
     }
   }
   
