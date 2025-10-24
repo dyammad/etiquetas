@@ -339,7 +339,15 @@
   async function connectBluetooth(){
     try {
       if(!navigator.bluetooth){
-        alert('Bluetooth não suportado neste navegador. Use Chrome/Edge.');
+        const browserName = detectBrowser();
+        let message = '❌ Web Bluetooth não suportado neste navegador/plataforma.\n\n';
+        message += '✅ SOLUÇÕES:\n';
+        message += '1. Use o navegador Chrome (recomendado)\n';
+        message += '2. Use o navegador Edge\n';
+        message += '3. Ou use o modo "Navegador (padrão)" e imprima via PDF\n\n';
+        message += 'Navegador atual: ' + browserName;
+        alert(message);
+        updateBtStatus('❌ Web Bluetooth não suportado. Use Chrome ou Edge.');
         return;
       }
       
@@ -464,6 +472,16 @@
       btStatus.textContent = msg;
       btStatus.style.display = 'block';
     }
+  }
+  
+  function detectBrowser(){
+    const ua = navigator.userAgent;
+    if(ua.includes('Edg/')) return 'Edge';
+    if(ua.includes('OPR/') || ua.includes('Opera')) return 'Opera';
+    if(ua.includes('Chrome/') && !ua.includes('Edg/')) return 'Chrome';
+    if(ua.includes('Firefox/')) return 'Firefox';
+    if(ua.includes('Safari/') && !ua.includes('Chrome')) return 'Safari';
+    return 'Desconhecido';
   }
   
   // ESC/POS commands for thermal printer
@@ -684,6 +702,14 @@
         if(connectBtBtn) connectBtBtn.style.display = isBluetooth ? 'inline-block' : 'none';
         if(btHelp) btHelp.style.display = isBluetooth ? 'block' : 'none';
         if(isBluetooth && paperSizeSelect) paperSizeSelect.value = '58mm';
+        
+        // Check Bluetooth support
+        if(isBluetooth && !navigator.bluetooth){
+          const browserName = detectBrowser();
+          updateBtStatus('❌ ' + browserName + ' não suporta Web Bluetooth. Use Chrome ou Edge!');
+        } else if(!isBluetooth){
+          if(btStatus) btStatus.style.display = 'none';
+        }
       });
     }
     
